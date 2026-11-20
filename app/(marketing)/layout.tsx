@@ -23,7 +23,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+    <header>
+      <h1>Header Text</h1>
+    </header>
       <body className="min-h-full flex flex-col">{children}</body>
+
+    <main>
+      <p>&copy; 2023 My App. All rights reserved.</p>
+    </main>
     </html>
   );
 }
