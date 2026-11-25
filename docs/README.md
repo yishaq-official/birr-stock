@@ -26,6 +26,7 @@ The specification is divided into the following documents:
 | **[Use Cases](./use-cases.md)** | End-to-end actor-driven functional workflows. | Inbound receiving, guided putaway, wave picking, packing verification, returns grading, cycle counting. |
 | **[Functional Requirements](./functional-requirements.md)** | Detailed, testable system requirements with Acceptance Criteria. | Item master, inventory ledger, order allocation, fulfillment, RMA, channel sync, RBAC. |
 | **[Architecture & Data Models](./system-architecture-spec.md)** | Technical design, schema models, state machines, and hardware integration. | PostgreSQL schema, Redis lock strategy, BullMQ workers, Zebra thermal printing, Next.js PWA. |
+| **[Implementation Plan](./implementation-plan.md)** | 10-phase micro-task implementation roadmap. | Granular tasks, verification criteria, timeline, and sprint-by-sprint status tracking. |
 
 ---
 
