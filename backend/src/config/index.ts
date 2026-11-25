@@ -3,7 +3,8 @@ export interface AppConfig {
   port: number;
   databaseUrl: string;
   redisUrl: string;
-  jwtSecret: string;
+  betterAuthSecret: string;
+  betterAuthUrl: string;
   corsOrigin: string;
 }
 
@@ -12,6 +13,7 @@ export const config: AppConfig = {
   port: parseInt(process.env.PORT || '4000', 10),
   databaseUrl: process.env.DATABASE_URL || 'postgresql://birrstock:birrstock_dev_password@localhost:5432/birrstock_db',
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
-  jwtSecret: process.env.JWT_SECRET || 'super_secret_enterprise_jwt_key_birrstock_2026_dev',
+  betterAuthSecret: process.env.BETTER_AUTH_SECRET || 'super_secret_better_auth_key_birrstock_2026_dev',
+  betterAuthUrl: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
 };

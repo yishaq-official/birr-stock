@@ -47,25 +47,32 @@ flowchart LR
 ---
 
 ## Phase 1: Security, Auth & RBAC Foundation (Sprint 2)
-**Goal:** Implement authentication, multi-role authorization, and foundational immutable audit logging.
+**Goal:** Implement authentication, multi-role authorization, and foundational immutable audit logging using Better Auth.
 
 ### Micro-Tasks:
-* [ ] **1.1 Identity & Credential Schema:**
-  * Create `users` table (`id`, `email`, `password_hash`, `first_name`, `last_name`, `role_id`, `is_active`, `created_at`).
-  * Create `roles` and `permissions` tables with initial seeds: `SUPER_ADMIN`, `OPERATIONS_ADMIN`, `INVENTORY_CONTROLLER`, `WAREHOUSE_OPERATOR`, `PACK_STATION`, `PROCUREMENT`.
-  * *Verification:* Run migration and seed script; verify test users in database.
-* [ ] **1.2 JWT Authentication & Session Handling:**
-  * Implement access token (short-lived 15m) + refresh token (long-lived 7d stored in Redis) authentication flow.
-  * Provide Next.js login screen with form validation, error states, and session persistence in secure HTTP-only cookies.
-  * *Verification:* Successfully log in, inspect JWT claims, and verify token refresh when access token expires.
-* [ ] **1.3 Role Guards & Route Protection:**
-  * Create `@Roles()` decorator and `RolesGuard` in NestJS backend.
-  * Implement Next.js middleware to redirect unauthenticated or unauthorized users trying to access restricted routes (e.g. `/finance` or `/settings`).
-  * *Verification:* Unit test verifying `WAREHOUSE_OPERATOR` is blocked from calling `/api/v1/costs` (403 Forbidden).
-* [ ] **1.4 Immutable Audit Logging Service:**
-  * Create `system_audit_logs` table (`actor_id`, `action`, `entity_type`, `entity_id`, `diff_json`, `ip_address`, `timestamp`).
-  * Implement an asynchronous NestJS interceptor to capture state mutations without adding HTTP response latency.
-  * *Verification:* Trigger a user role change and confirm the before/after JSON diff is recorded in the audit log.
+* [ ] **1.1 Better Auth Core Schema & PostgreSQL Adapter:**
+  * Configure Better Auth core tables: `user` (with `role`), `session`, `account`, and `verification`.
+  * Set up database connection pool using PostgreSQL adapter for Better Auth.
+  * Seed initial admin account and default operational roles: `SUPER_ADMIN`, `OPERATIONS_ADMIN`, `INVENTORY_CONTROLLER`, `WAREHOUSE_OPERATOR`, `PACK_STATION`, `PROCUREMENT`.
+  * *Verification:* Run migration script; verify Better Auth core tables exist in PostgreSQL.
+* [ ] **1.2 Better Auth Server Configuration & Handler:**
+  * Initialize `betterAuth({ database, emailAndPassword: { enabled: true }, plugins: [admin()] })`.
+  * Expose the Better Auth API route handler at `/api/auth/[...all]`.
+  * Configure secure, HTTP-only session cookies and CSRF protections for both Next.js and Node.js.
+  * *Verification:* Hit `/api/auth/ok` or `/api/auth/get-session` and receive valid responses.
+* [ ] **1.3 Better Auth Client & Next.js Authentication UI:**
+  * Set up `createAuthClient` from `better-auth/react` in `birr-stock/lib/auth-client.ts`.
+  * Build Next.js Login screen using `authClient.signIn.email()` with error states and redirect handling.
+  * Integrate `useSession()` into top navigation bar to display logged-in operator name, avatar, and active role badge.
+  * *Verification:* Successfully register/log in an operator; verify session cookie is set and UI shows active operator name.
+* [ ] **1.4 Role Guards & Route Protection via Better Auth Sessions:**
+  * Create server-side session validator helper to verify roles on API routes and Server Components (`auth.api.getSession({ headers })`).
+  * Implement Next.js middleware to redirect unauthorized users trying to access restricted routes (e.g. `/finance` or `/settings`).
+  * *Verification:* Unit test verifying `WAREHOUSE_OPERATOR` is blocked from calling admin/cost endpoints (403 Forbidden).
+* [ ] **1.5 Immutable Audit Logging Service:**
+  * Create `system_audit_logs` table (`actor_id`, `actor_email`, `action`, `entity_type`, `entity_id`, `diff_json`, `ip_address`, `timestamp`).
+  * Capture user session context from Better Auth on all state-mutating requests.
+  * *Verification:* Trigger a role or inventory change and confirm the actor's Better Auth `userId` and email are recorded in the audit trail.
 
 ---
 

@@ -55,6 +55,63 @@ flowchart TB
 
 ## 2. Core Relational Database Schema (PostgreSQL DDL)
 
+### 2.0 Authentication & Session Hierarchy (Better Auth Core)
+```sql
+-- Better Auth Core: Users with RBAC role
+CREATE TABLE "user" (
+    "id" TEXT PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT UNIQUE NOT NULL,
+    "emailVerified" BOOLEAN NOT NULL DEFAULT FALSE,
+    "image" TEXT,
+    "role" TEXT NOT NULL DEFAULT 'WAREHOUSE_OPERATOR',
+    "banned" BOOLEAN DEFAULT FALSE,
+    "banReason" TEXT,
+    "banExpires" TIMESTAMP WITH TIME ZONE,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- Better Auth Core: Server-Side Active Sessions
+CREATE TABLE "session" (
+    "id" TEXT PRIMARY KEY,
+    "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "token" TEXT UNIQUE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE
+);
+
+-- Better Auth Core: Account Credentials & Social Providers
+CREATE TABLE "account" (
+    "id" TEXT PRIMARY KEY,
+    "accountId" TEXT NOT NULL,
+    "providerId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+    "accessToken" TEXT,
+    "refreshToken" TEXT,
+    "idToken" TEXT,
+    "accessTokenExpiresAt" TIMESTAMP WITH TIME ZONE,
+    "refreshTokenExpiresAt" TIMESTAMP WITH TIME ZONE,
+    "scope" TEXT,
+    "password" TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- Better Auth Core: Verification Tokens
+CREATE TABLE "verification" (
+    "id" TEXT PRIMARY KEY,
+    "identifier" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
 ### 2.1 Catalog & Product Hierarchy
 ```sql
 -- Base Product

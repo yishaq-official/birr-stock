@@ -4,17 +4,55 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Identity & Role-Based Access Control (RBAC)
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    first_name VARCHAR(64) NOT NULL,
-    last_name VARCHAR(64) NOT NULL,
-    role VARCHAR(32) NOT NULL DEFAULT 'WAREHOUSE_OPERATOR',
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+-- 1. Better Auth Core Tables: User, Session, Account, Verification
+CREATE TABLE IF NOT EXISTS "user" (
+    "id" TEXT PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT UNIQUE NOT NULL,
+    "emailVerified" BOOLEAN NOT NULL DEFAULT FALSE,
+    "image" TEXT,
+    "role" TEXT NOT NULL DEFAULT 'WAREHOUSE_OPERATOR',
+    "banned" BOOLEAN DEFAULT FALSE,
+    "banReason" TEXT,
+    "banExpires" TIMESTAMP WITH TIME ZONE,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "session" (
+    "id" TEXT PRIMARY KEY,
+    "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "token" TEXT UNIQUE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "account" (
+    "id" TEXT PRIMARY KEY,
+    "accountId" TEXT NOT NULL,
+    "providerId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+    "accessToken" TEXT,
+    "refreshToken" TEXT,
+    "idToken" TEXT,
+    "accessTokenExpiresAt" TIMESTAMP WITH TIME ZONE,
+    "refreshTokenExpiresAt" TIMESTAMP WITH TIME ZONE,
+    "scope" TEXT,
+    "password" TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "verification" (
+    "id" TEXT PRIMARY KEY,
+    "identifier" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 2. Product Master Data & Multi-Barcode Registry
@@ -92,7 +130,7 @@ CREATE TABLE IF NOT EXISTS inventory_transactions (
     reason_code VARCHAR(64) NOT NULL,
     reference_type VARCHAR(32),
     reference_id VARCHAR(64),
-    performed_by UUID REFERENCES users(id),
+    performed_by TEXT REFERENCES "user"("id"),
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -141,7 +179,8 @@ CREATE TABLE IF NOT EXISTS order_allocations (
 -- 6. Audit Trail
 CREATE TABLE IF NOT EXISTS system_audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    actor_id UUID REFERENCES users(id),
+    actor_id TEXT REFERENCES "user"("id"),
+    actor_email VARCHAR(255),
     action VARCHAR(64) NOT NULL,
     entity_type VARCHAR(64) NOT NULL,
     entity_id VARCHAR(64) NOT NULL,
@@ -156,3 +195,5 @@ CREATE INDEX IF NOT EXISTS idx_variants_sku ON product_variants(sku);
 CREATE INDEX IF NOT EXISTS idx_ledger_variant ON inventory_transactions(variant_id, warehouse_id);
 CREATE INDEX IF NOT EXISTS idx_balances_lookup ON inventory_balances(variant_id, warehouse_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON sales_orders(status);
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON "session"("token");
+CREATE INDEX IF NOT EXISTS idx_users_email ON "user"("email");

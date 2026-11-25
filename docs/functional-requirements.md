@@ -192,6 +192,15 @@ Each requirement follows standard enterprise RFC/ISO format:
   1. Log entry includes: `actor_id`, `actor_email`, `action_type`, `entity_name`, `entity_id`, `previous_state` (JSON), `new_state` (JSON), `ip_address`, `user_agent`, `timestamp`.
   2. Audit logs cannot be deleted or edited via the application layer.
 
+### FR-703: Better Auth Authentication & Session Management
+* **Priority:** P0
+* **Statement:** The system MUST use **Better Auth** as the centralized authentication engine with secure HTTP-only cookies, database-backed sessions, and built-in CSRF protection.
+* **Acceptance Criteria:**
+  1. Store sessions in PostgreSQL using Better Auth core tables (`user`, `session`, `account`, `verification`).
+  2. Implement Better Auth Admin/RBAC plugin to enforce user roles directly in session payloads.
+  3. Client-side state managed via Better Auth React client hooks (`useSession()`, `signIn.email()`, `signOut()`).
+  4. Server-side session verification via `auth.api.getSession()` across Next.js API routes and backend services.
+
 ---
 
 ## 8. Reporting, Analytics & Reorder Intelligence (FR-800)
