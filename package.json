@@ -1,0 +1,18 @@
+{
+  "name": "birr-stock-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "birr-stock",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev --prefix birr-stock",
+    "dev:backend": "npm run dev --prefix backend",
+    "build:frontend": "npm run build --prefix birr-stock",
+    "lint:frontend": "npm run lint --prefix birr-stock",
+    "test:backend": "npm run test --prefix backend",
+    "test": "npm run test:backend",
+    "build": "npm run build:frontend"
+  }
+}
